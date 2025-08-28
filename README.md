@@ -6,16 +6,38 @@ Redirected URL paths based on Drupal 7 / Islandora URL paths.
 
 The original instance of the CWRC Repository was hosted on Islandora / Drupal 7 and during the migration to Drupal 10 / Islandora 2, the URL path changed. To retain the availability of the old url path to prevent dead links, a redirect mapping that translates an old URL path to the new URL path. This also allows a staged migration from legacy Drupal 7 to the new LEAF/Islandroa based Drupal 10+ instance where URL paths of not yet migrated content redirect to a legacy instance while migrated content redirect to the new isntance.
 
+## Redirects
+
 Technologies considered
+
 * Redirect at the ingress controller: this would allow only redirect for the not yet migrated content however the current version does not handle the scale of not yet migrated content (unlike the previous version). As the list decreases to a small 5 figure number then this might be viable.
 * Drupal: decided against to reduce DB load
 * Apache redirect rewrite map file: the approach works without adding DB load but requires more time to update
 
-## Update the Apache Rewrite Map file 
+Given the limitations, the following two approaches are used.
+
+### Drupal Nodes
+
+For Drupal Node pages in the legacy site, ~10,000 node, the ingress controller URL rewrite is used redirect to legacy.cwrc.ca if included in the regex list [in the middleware redirect-to-legacy-drupal-nodes](https://github.com/cwrc/cwrc_v2/blob/main/docker/custom/traefik_cwrc.yml). Each row in the list redirects to legacy.cwrc.ca.
+
+#### Updating
+
+As Drupal Nodes are migrated to the new site, remove the node from the list. If removing the last line in the list then verify the last line ends with `\` and not the regex "or" `|\`.
+
+### Drupal 7 Islandora Content
+
+Due to the initial size of ~400,000 breaking the 2025 version of the ingress controller, another approach was required for the Islandora repository content redirects to legacy.cwrc.ca. To facilitate the size, the a redirect rewrite map file is created for both [English](./map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt) and [French](./map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt) with the [config](./config/cwrc.ca_redirects.conf).
+
+
+#### Update the Apache Rewrite Map file 
+
+How to update the two map files.
+
+English version:
 
 ```
 # Generate the updated Drupal DB dump of the path_alias table 
-drush sqlq "SELECT path, alias FROM path_alias;" > /var/www/drupal/private/v2.cwrc.ca_path_alias_$(date +"%Y-%m-%d_%H-%M-%S").txt
+docker compose exec drupal with-contenv drush sqlq "SELECT path, alias FROM path_alias;" > /tmp/v2.cwrc.ca_path_alias_$(date +"%Y-%m-%d_%H-%M-%S").txt
 
 Get current [./map_file/rewrite_map_cwrc.ca_islandora_object_pid.txt] file
 
@@ -40,10 +62,24 @@ httxt2dbm -f SDBM \
   -i ./map_file/rewrite_map_cwrc.ca_islandora_object_pid.txt \
   -o ./tmp/rewrite_map_cwrc.ca_islandora_object_pid
 
-# Copy resulting rewrite_map_cwrc.ca_islandora_object_pid.dir and rewrite_map_cwrc.ca_islandora_object_pid.pg to the cwrc_static container volume.
+# Copy resulting rewrite_map_cwrc.ca_islandora_object_pid.dir and rewrite_map_cwrc.ca_islandora_object_pid.pg to the cwrc_static container volume on v2-stage.cwrc.ca or cwrc.ca.
 
 # Restart cwrc_static container
 ```
+
+French: only update if translated Drupal Node in the path alias file. 
+
+Todo: test more fully when there is time and infrastructure is not crashing.
+
+```
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+python3 update_rewrite_mapping.py \
+  --input_drupal ./tmp/v2.cwrc.ca_path_alias_2025-08-21.txt \
+  --input_rewrite_map ./map_file/rewrite_map_cwrc.ca_islandora_object_pid.txt \
+  --output ./tmp/rewrite_map_cwrc.ca_islandora_object_pid.${TIMESTAMP}.txt 
+  --lang_code_filter fr
+```
+
 
 ## Testing
 
