@@ -28,14 +28,13 @@ As Drupal Nodes are migrated to the new site, remove the node from the list. If 
 
 Due to the initial size of ~400,000 breaking the 2025 version of the ingress controller, another approach was required for the Islandora repository content redirects to legacy.cwrc.ca. To facilitate the size, the a redirect rewrite map file is created for both [English](./map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt) and [French](./map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt) with the [config](./config/cwrc.ca_redirects.conf).
 
-
-#### Update the Apache Rewrite Map file 
+#### Update the Apache Rewrite Map file
 
 How to update the two map files.
 
 English version:
 
-```
+``` bash
 # Generate the updated Drupal DB dump of the path_alias table 
 docker compose exec drupal with-contenv drush sqlq "SELECT path, alias FROM path_alias;" > /tmp/v2.cwrc.ca_path_alias_$(date +"%Y-%m-%d_%H-%M-%S").txt
 
@@ -57,10 +56,14 @@ mv ./tmp/rewrite_map_cwrc.ca_islandora_object_pid.${TIMESTAMP}.txt ./map_file/re
 
 git commit
 
+ # on server
+cd /data/sites/cwrc.ca_redirects
+
+# Get the map_files
 # Regenerate rewrite mapping file
 httxt2dbm -f SDBM \
   -i ./map_file/rewrite_map_cwrc.ca_islandora_object_pid.txt \
-  -o ./tmp/rewrite_map_cwrc.ca_islandora_object_pid
+  -o ./rewrite_map_cwrc.ca_islandora_object_pid
 
 # Copy resulting rewrite_map_cwrc.ca_islandora_object_pid.dir and rewrite_map_cwrc.ca_islandora_object_pid.pg to the cwrc_static container volume on v2-stage.cwrc.ca or cwrc.ca.
 
@@ -71,7 +74,7 @@ French: only update if translated Drupal Node in the path alias file.
 
 Todo: test more fully when there is time and infrastructure is not crashing.
 
-```
+``` bash
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 python3 update_rewrite_mapping.py \
   --input_drupal ./tmp/v2.cwrc.ca_path_alias_2025-08-21.txt \
@@ -80,10 +83,16 @@ python3 update_rewrite_mapping.py \
   --lang_code_filter fr
 ```
 
+``` bash
+# Regenerate rewrite mapping file
+httxt2dbm -f SDBM \
+  -i ./map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt \
+  -o ./rewrite_map_cwrc.ca_islandora_object_pid
 
 ## Testing
 
 * Display the lines that contain a given ID based on a file containing a list of IDs 
-    ```
+ 
+    ``` bash
     while read -r line; do grep ${line} a; done < "/tmp/z"
     ```
