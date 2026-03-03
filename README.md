@@ -65,7 +65,9 @@ httxt2dbm -f SDBM \
   -i ./map_file/rewrite_map_cwrc.ca_islandora_object_pid.txt \
   -o ./rewrite_map_cwrc.ca_islandora_object_pid
 
-# Copy resulting rewrite_map_cwrc.ca_islandora_object_pid.dir and rewrite_map_cwrc.ca_islandora_object_pid.pg to the cwrc_static container volume on v2-stage.cwrc.ca or cwrc.ca.
+# Copy resulting rewrite_map_cwrc.ca_islandora_object_pid.dir
+# and rewrite_map_cwrc.ca_islandora_object_pid.pg to the 
+# cwrc_static container volume on v2-stage.cwrc.ca or cwrc.ca.
 
 # Restart cwrc_static container
 ```
@@ -93,15 +95,29 @@ httxt2dbm -f SDBM \
 ### Alternative
 
 ```bash
+# Backup
 cd /data/sites/cwrc.ca_redirects/
 tar -zcvf apache_config_$(date +"%Y-%m-%dT_%H-%M-%S").tar.gz apache_config
-cd /data/sites/cwrc.ca_redirects/apache.config
+
+# Download updated map file
+cd /data/sites/cwrc.ca_redirects/apache_config
 wget https://raw.githubusercontent.com/cwrc/legacy_cwrc.ca_redirects/refs/heads/main/map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt
 wget https://github.com/cwrc/legacy_cwrc.ca_redirects/raw/refs/heads/main/map_file/rewrite_map_cwrc.ca_islandora_object_pid.txt
-mv rewrite_map_cwrc.ca_islandora_object_pid.txt.1 rewrite_map_cwrc.ca_islandora_object_pid.txt 
-mv rewrite_map_cwrc.ca_islandora_object_pid.fr.txt.1 rewrite_map_cwrc.ca_islandora_object_pid.fr.txt
-httxt2dbm -f SDBM   -i rewrite_map_cwrc.ca_islandora_object_pid.txt   -o ./rewrite_map_cwrc.ca_islandora_object_pid
-httxt2dbm -f SDBM   -i rewrite_map_cwrc.ca_islandora_object_pid.fr.txt   -o ./rewrite_map_cwrc.ca_islandora_object_pid_fr
+
+mv rewrite_map_cwrc.ca_islandora_object_pid.txt.1 \
+    rewrite_map_cwrc.ca_islandora_object_pid.txt 
+mv rewrite_map_cwrc.ca_islandora_object_pid.fr.txt.1 \
+    rewrite_map_cwrc.ca_islandora_object_pid.fr.txt
+
+# Generate mapfile DB
+httxt2dbm \
+    -f SDBM \
+    -i rewrite_map_cwrc.ca_islandora_object_pid.txt \
+    -o ./rewrite_map_cwrc.ca_islandora_object_pid
+httxt2dbm \
+    -f SDBM \
+    -i rewrite_map_cwrc.ca_islandora_object_pid.fr.txt \
+    -o ./rewrite_map_cwrc.ca_islandora_object_pid_fr
 ```
 
 ## Testing
