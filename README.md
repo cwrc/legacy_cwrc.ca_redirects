@@ -87,7 +87,22 @@ python3 update_rewrite_mapping.py \
 # Regenerate rewrite mapping file
 httxt2dbm -f SDBM \
   -i ./map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt \
-  -o ./rewrite_map_cwrc.ca_islandora_object_pid
+  -o ./rewrite_map_cwrc.ca_islandora_object_pid_fr
+```
+
+### Alternative
+
+```bash
+cd /data/sites/cwrc.ca_redirects/
+tar -zcvf apache_config_$(date +"%Y-%m-%dT_%H-%M-%S").tar.gz apache_config
+cd /data/sites/cwrc.ca_redirects/apache.config
+wget https://raw.githubusercontent.com/cwrc/legacy_cwrc.ca_redirects/refs/heads/main/map_file/rewrite_map_cwrc.ca_islandora_object_pid.fr.txt
+wget https://github.com/cwrc/legacy_cwrc.ca_redirects/raw/refs/heads/main/map_file/rewrite_map_cwrc.ca_islandora_object_pid.txt
+mv rewrite_map_cwrc.ca_islandora_object_pid.txt.1 rewrite_map_cwrc.ca_islandora_object_pid.txt 
+mv rewrite_map_cwrc.ca_islandora_object_pid.fr.txt.1 rewrite_map_cwrc.ca_islandora_object_pid.fr.txt
+httxt2dbm -f SDBM   -i rewrite_map_cwrc.ca_islandora_object_pid.txt   -o ./rewrite_map_cwrc.ca_islandora_object_pid
+httxt2dbm -f SDBM   -i rewrite_map_cwrc.ca_islandora_object_pid.fr.txt   -o ./rewrite_map_cwrc.ca_islandora_object_pid_fr
+```
 
 ## Testing
 
